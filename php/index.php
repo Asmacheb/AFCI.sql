@@ -9,7 +9,7 @@
             height: 5vh;
             width: 100vw;
             text-decoration: none;
-            background-color: purple;
+            background-color: #0C2D57;
             list-style: none;
             margin: 0;
             padding: 0;
@@ -22,6 +22,57 @@
             float: left;
             margin-left: 4vh;
             color: white;
+           
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            margin: 20px auto; 
+    border-collapse: collapse;
+    width: 100%; 
+   table-layout: fixed; 
+     overflow: auto; 
+        
+        }
+
+        th, td {
+            /* border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis; */
+            
+    border: 1px solid #ddd;
+    padding: 8px;
+    word-wrap: break-word; /* Ajouter cette propriété pour forcer le contenu à se rompre sur une nouvelle ligne lorsque la largeur de la cellule est atteinte */
+
+       
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+      
+        form {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        button {
+            background-color: red;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
         }
        
     </style>
@@ -49,6 +100,7 @@ $pass = "admin"; // Remplacez par votre mot de passe
            <a href="?page=centres"> <li>Centres</li></a>
            <a href="?page=formations">  <li>Formations</li></a>
            <a href="?page=pedagogie">  <li>Pédagogie</li></a>
+           <a href="?page=affecter">  <li>Affecter</li></a>
            <a href="?page=sessions">  <li>Sessions</li></a>
            <a href="?page=apprenants">  <li>Apprenants</li></a>
         </ul>
@@ -115,7 +167,7 @@ $pass = "admin"; // Remplacez par votre mot de passe
                             echo '<td>' . $value['id_role'] . '</td>';
                             echo '<td>' . $value['nom_role'] . '</td>';
                             echo '<td><a href="?page=roles&action=edit&id=' . $value['id_role'] . '">Modifier</a></td>';
-                            echo '</tr>';
+                            // echo '</tr>';
                             echo '<td>
                             <form method="POST" action="?page=role&type=supprimer">
                                 <input type="hidden" name="id_role" value="' . $value['id_role'] . '">
@@ -177,7 +229,7 @@ if(isset($_POST['submitEditRole'])) {
 ?>
 
 
-?>
+
 
 <?php 
     if (isset($_POST['submitRole'])){
@@ -487,13 +539,18 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
 <?php 
 // PAGE PEDAGOGIE
     if(isset($_GET["page"])&& $_GET["page"]=="pedagogie"){
-        $sqlpedagogie = "SELECT * FROM pedagogie";
+        $sqlpedagogie = "SELECT `id_pedagogie`, `nom_pedagogie`, `prenom_pedagogie`, `mail_pedagogie`, `num_pedagogie`, `pedagogie`.`id_role`, `nom_role`
+        FROM `pedagogie`
+        JOIN `role` ON `pedagogie`.`id_role` = `role`.`id_role`;
+        ";
         $requetepedagogie = $bdd->query($sqlpedagogie);
         $resultspedagogie = $requetepedagogie->fetchAll(PDO::FETCH_ASSOC);
 
         $sql = "SELECT * FROM role";
         $requete = $bdd->query($sql);
         $results = $requete->fetchAll(PDO::FETCH_ASSOC);
+
+    
 
         ?> <form method="POST">
         <h1>Ajout Pédagogie</h1>
@@ -539,7 +596,7 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
                             echo '<td>' . $value['prenom_pedagogie'] . '</td>';
                             echo '<td>' . $value['mail_pedagogie'] . '</td>';
                             echo '<td>' . $value['num_pedagogie'] . '</td>';
-                            echo '<td>' . $value['id_role'] . '</td>';
+                            echo '<td>' . $value['id_role'] . ' - ' . $value['nom_role'] . '</td>';
                             echo '<td><a href="?page=pedagogie&action=edit&id=' . $value['id_pedagogie'] . '">Modifier</a></td>';
                             echo '<td>
                             <form method="POST" action="?page=pedagogie&type=supprimer">
@@ -643,7 +700,25 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
 <?php 
 // PAGE SESSIONS
     if(isset($_GET["page"])&& $_GET["page"]=="sessions"){
-        $sqlsession = "SELECT * FROM session";
+        $sqlsession = "SELECT
+        `session`.`id_session`,
+        `session`.`nom_session`,
+        `session`.`date_debut`,
+        `session`.`id_pedagogie`,
+        `pedagogie`.`nom_pedagogie`,
+        `pedagogie`.`prenom_pedagogie`,
+        `session`.`id_formation`,
+        `formations`.`nom_formation`,
+        `session`.`id_centre`,
+        `centres`.`ville_centre`
+    FROM
+        `session`
+    LEFT JOIN
+        `formations` ON `session`.`id_formation` = `formations`.`id_formation`
+    LEFT JOIN
+        `pedagogie` ON `session`.`id_pedagogie` = `pedagogie`.`id_pedagogie`
+    LEFT JOIN
+        `centres` ON `session`.`id_centre` = `centres`.`id_centre`;";
         $requetesession = $bdd->query($sqlsession);
         $resultssession = $requetesession->fetchAll(PDO::FETCH_ASSOC);
 
@@ -722,9 +797,9 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
                             echo '<td>' . $value['id_session'] . '</td>';
                             echo '<td>' . $value['nom_session'] . '</td>';
                             echo '<td>' . $value['date_debut'] . '</td>';
-                            echo '<td>' . $value['id_pedagogie'] . '</td>';
-                            echo '<td>' . $value['id_formation'] . '</td>';
-                            echo '<td>' . $value['id_centre'] . '</td>';
+                            echo '<td>' . $value['id_pedagogie'] . ' - ' . $value['nom_pedagogie'] .  ' - ' . $value['prenom_pedagogie'] .'</td>';
+                            echo '<td>' . $value['id_formation'] .  ' - ' . $value['nom_formation'] . '</td>';
+                            echo '<td>' . $value['id_centre'] .  ' - ' . $value['ville_centre'] . '</td>';
                             echo '<td><a href="?page=session&action=edit&id=' . $value['id_session'] . '">Modifier</a></td>';
                             echo '<td>
                             <form method="POST" action="?page=session&type=supprimer">
@@ -826,7 +901,33 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
 <?php 
 if(isset($_GET["page"])&& $_GET["page"]=="apprenants"){
 
-    $sqlapprenants = "SELECT * FROM apprenants";
+    $sqlapprenants = "SELECT
+    `apprenants`.`id_apprenant`,
+    `apprenants`.`nom_apprenant`,
+    `apprenants`.`prenom_apprenant`,
+    `apprenants`.`mail_apprenant`,
+    `apprenants`.`adresse_apprenant`,
+    `apprenants`.`ville_apprenant`,
+    `apprenants`.`code_postal_apprenant`,
+    `apprenants`.`tel_apprenant`,
+    `apprenants`.`date_naissance_apprenant`,
+    `apprenants`.`niveau_apprenant`,
+    `apprenants`.`num_PE_apprenant`,
+    `apprenants`.`num_secu_apprenant`,
+    `apprenants`.`rib_apprenant`,
+    `apprenants`.`num_PE_apprenant`,
+    `apprenants`.`id_role`,
+    `apprenants`.`id_session`,
+    `role`.`id_role`, 
+    `role`.`nom_role`,
+    `session`.`id_session`,
+    `session`.`nom_session`
+FROM
+    `apprenants`
+LEFT JOIN
+    `role` ON `apprenants`.`id_role` = `role`.`id_role`
+LEFT JOIN
+    `session` ON `apprenants`.`id_session` = `session`.`id_session`;";
     $requeteapprenants = $bdd->query($sqlapprenants);
     $resultsapprenants = $requeteapprenants->fetchAll(PDO::FETCH_ASSOC);
 
@@ -927,13 +1028,13 @@ if(isset($_GET["page"])&& $_GET["page"]=="apprenants"){
                             echo '<td>' . $value['num_PE_apprenant'] . '</td>';
                             echo '<td>' . $value['num_secu_apprenant'] . '</td>';
                             echo '<td>' . $value['rib_apprenant'] . '</td>';
-                            echo '<td>' . $value['id_role'] . '</td>';
-                            echo '<td>' . $value['id_session'] . '</td>';
+                            echo '<td>' . $value['id_role'] . ' - ' . $value['nom_role'] . '</td>';
+                            echo '<td>' . $value['id_session'] . ' - ' . $value['nom_session'] .'</td>';
                             echo '<td><a href="?page=apprenants&action=edit&id=' . $value['id_apprenant'] . '">Modifier</a></td>';
                             echo '<td>
                             <form method="POST" action="?page=apprenats&type=supprimer">
                                 <input type="hidden" name="id_apprenant" value="' . $value['id_apprenant'] . '">
-                                <button type="submit">Supprimer</button>
+                                <button type="submit" style="max-width: 60px;" >Supprimer</button>
                             </form>
                           </td>';
                             echo '</tr>';
@@ -1093,5 +1194,122 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
 }
 ?>
 
+<!-- JOINTURE AFFECTER -->
+<?php
+if(isset($_GET["page"]) && $_GET["page"]=="affecter") {
+    $sqlaffecter = "SELECT * FROM affecter";
+    $requeteAffecter = $bdd->query($sqlaffecter);
+    
+    $resultatsAffecter = $requeteAffecter->fetchAll(PDO::FETCH_ASSOC);
+
+    // Inclure votre fichier de connexion à la base de données ici
+
+    // Récupérer la liste des centres
+    $sqlCentres = "SELECT id_centre, ville_centre FROM centres";
+    $requeteCentres = $bdd->query($sqlCentres);
+    $centres = $requeteCentres->fetchAll(PDO::FETCH_ASSOC);
+
+    // Récupérer la liste des membres de l'équipe pédagogique
+    $sqlPedagogie = "SELECT id_pedagogie, nom_pedagogie, prenom_pedagogie FROM pedagogie";
+    $requetePedagogie = $bdd->query($sqlPedagogie);
+    $pedagogie = $requetePedagogie->fetchAll(PDO::FETCH_ASSOC);
+
+    $resultsaffecter = $resultatsAffecter;
+?>
+    <h1>Affecter Membre Pédagogique à un Centre</h1>
+
+    <br>
+ 
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID Centre</th>
+                <th>ID Pédagogie</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            foreach ($resultsaffecter as $value) {
+                echo '<tr>';
+                echo '<td>' . $value['id_centre'] . '</td>';
+                echo '<td>' . $value['id_pedagogie'] . '</td>';
+               
+                echo '<td>
+                        <form method="POST" action="?page=affecter&type=supprimer">
+                            <input type="hidden" name="id_centre" value="' . $value['id_centre'] . '">
+                            <input type="hidden" name="id_pedagogie" value="' . $value['id_pedagogie'] . '">
+                            <button type="submit">Supprimer</button>
+                        </form>
+                      </td>';
+                echo '</tr>';
+            }
+            ?>
+        </tbody>
+    </table>
+
+    <form method="POST">
+        <label>Centre</label>
+        
+        <select name="id_centre">
+            <?php
+            foreach ($centres as $centre) {
+                echo '<option value="' . $centre['id_centre'] . '">' . $centre['ville_centre'] . '</option>';
+            }
+            ?>
+        </select>
+
+        <label>Membre Pédagogique</label>
+        <select name="id_pedagogie">
+            <?php
+            foreach ($pedagogie as $pedagogie) {
+                echo '<option value="' . $pedagogie['id_pedagogie'] . '">' . $pedagogie['nom_pedagogie'] . ' ' . $pedagogie['prenom_pedagogie'] . '</option>';
+            }
+           
+            ?>
+        </select>
+    
+
+        <input type="submit" name="submitAffecter">
+    
+    </form>
+
+    <?php
+    // Traitement du formulaire d'affectation
+    if(isset($_POST['submitAffecter'])) {
+        $id_centre = $_POST['id_centre'];
+        $id_pedagogie = $_POST['id_pedagogie'];
+
+        // Assurez-vous de sécuriser votre code contre les attaques par injection SQL
+
+        $sqlAffecter = "INSERT INTO `affecter`(`id_centre`, `id_pedagogie`) VALUES (:id_centre, :id_pedagogie)";
+
+        $stmtAffecter = $bdd->prepare($sqlAffecter);
+        $stmtAffecter->bindParam(':id_centre', $id_centre, PDO::PARAM_INT);
+        $stmtAffecter->bindParam(':id_pedagogie', $id_pedagogie, PDO::PARAM_INT);
+
+        if($stmtAffecter->execute()) {
+            echo "Membre affecté avec succès.";
+        } else {
+            echo "Erreur lors de l'affectation.";
+        }
+    }
+    ?>
+
+    <!-- SUPPRIMER -->
+    <?php 
+    if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
+        if (isset($_POST["id_centre"])) {
+            $deleteIdAffecter = $_POST["id_centre"];$_POST["id_pedagogie"];
+            $sqlDeleteAffecter = "DELETE FROM `affecter` WHERE id_centre = $deleteIdCentre and id_pedagogie = $deleteIdPedagogie";
+
+            $bdd->query($sqlDeleteCentre)($sqlDeletePedagogie);
+            echo "Données supprimées";
+        }
+    }  }
+    ?>
 </body>
 </html>
+
+
+
+
