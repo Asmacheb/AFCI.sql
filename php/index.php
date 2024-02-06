@@ -734,6 +734,10 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
         $requetecentre = $bdd->query($sqlcentre);
         $resultscentre = $requetecentre->fetchAll(PDO::FETCH_ASSOC);
 
+            $sqllocaliser = "SELECT  'id_formation', 'id_centre' FROM localiser WHERE 1";
+        $requetelocaliser = $bdd->query($sqllocaliser);
+        $resultslocaliser = $requetelocaliser->fetchAll(PDO::FETCH_ASSOC);
+
         ?> <form method="POST">
         <h1> Ajout sessions</h1>
         <label>Nom Session</label>
@@ -804,6 +808,8 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
                             echo '<td>
                             <form method="POST" action="?page=session&type=supprimer">
                                 <input type="hidden" name="id_session" value="' . $value['id_session'] . '">
+                                <input type="hidden" name="id_formation" value="' . $value['id_formation'] . '">
+                                <input type="hidden" name="id_centre" value="' . $value['id_centre'] . '">
                                 <button type="submit">Supprimer</button>
                             </form>
                           </td>';
@@ -828,6 +834,9 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
         $sql= "INSERT INTO `session`( `nom_session`, `date_debut`, `id_pedagogie`, `id_formation`, `id_centre`) VALUES ('$nomSession','$dateDebut','$idPedagogie','$idFormation','$idCentre')";
         $bdd->query($sql);
 
+        $sqllocaliser= "INSERT INTO `localiser`( `id_formation`, `id_centre`) VALUES ('$idFormation','$idCentre')";
+        $bdd->query($sqllocaliser);
+
         echo "data ajoutée dans la bdd";
 
     }
@@ -837,6 +846,21 @@ if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
 <?php
 if(isset($_GET["page"]) && $_GET["page"] == "session") {
     if(isset($_GET["action"]) && $_GET["action"] == "edit") {
+
+    
+        $sqlpedagogie = "SELECT * FROM pedagogie";
+        $requetepegagogie = $bdd->query($sqlpedagogie); 
+        $resultspedagogie = $requetepegagogie->fetchAll(PDO::FETCH_ASSOC); 
+       
+        $sqlformation = "SELECT * FROM formations";
+        $requeteformation = $bdd->query($sqlformation);
+        $resultsformation = $requeteformation->fetchAll(PDO::FETCH_ASSOC);
+
+        $sqlcentre = "SELECT * FROM centres";
+        $requetecentre = $bdd->query($sqlcentre);
+        $resultscentre = $requetecentre->fetchAll(PDO::FETCH_ASSOC);
+
+
         // Récupérer l'ID du rôle à modifier
         $idSessionToEdit = isset($_GET["id"]) ? intval($_GET["id"]) : 0;
 
@@ -855,6 +879,35 @@ if(isset($_GET["page"]) && $_GET["page"] == "session") {
                 <label>Nouveau</label>
                 <input type="text" name="newNomSession" value="<?php echo $sessionToEdit['nom_session']; ?>">
                 <input type="text" name="newDateDebut" value="<?php echo $sessionToEdit['date_debut']; ?>">
+                <select name="newIdPedagogie" id="">
+                <!-- <option value="idrole">id - nom role</option> -->
+                <?php 
+                
+                foreach( $resultspedagogie as $value ){             
+                        echo '<option value="' . $value['id_pedagogie'] .  '">' . $value['id_pedagogie'] . ' - ' . $value['nom_pedagogie'] .  $value['prenom_pedagogie']. '</option>';   
+                }
+                ?>
+            </select>
+              
+                <select name="newIdFormation" id="">
+                <!-- <option value="idrole">id - nom role</option> -->
+                <?php 
+                
+                foreach( $resultsformation as $value ){             
+                        echo '<option value="' . $value['id_formation'] .  '">' . $value['id_formation'] . ' - ' . $value['nom_formation'] . '</option>';   
+                }
+                ?>
+            </select>
+                
+            <select name="newIdCentre" id="">
+                <!-- <option value="idrole">id - nom role</option> -->
+                <?php 
+                
+                foreach( $resultscentre as $value ){             
+                        echo '<option value="' . $value['id_centre'] .  '">' . $value['id_centre'] . ' - ' . $value['nom_centre'] . '</option>';   
+                }
+                ?>
+            </select>
                
                 <input type="submit" name="submitEditSession" value="Enregistrer">
             </form>
@@ -871,15 +924,20 @@ if(isset($_POST['submitEditSession'])) {
     $idSessionToEdit = $_POST['idSessionToEdit'];
     $newNomSession = $_POST['newNomSession'];
     $newDateDebut = $_POST['newDateDebut'];
+    $newIdPedagogie = $_POST['newIdPedagogie'];
+    $newIdFormation = $_POST['newIdFormation'];
+    $newIdCentre = $_POST['newIdCentre'];
   
 
     // Assurez-vous de sécuriser votre code contre les attaques par injection SQL
 
-    $sqlUpdateSession= "UPDATE session SET nom_session = :newNomSession, date_debut = :newDateDebut WHERE id_session = :idSessionToEdit";
+    $sqlUpdateSession= "UPDATE session SET nom_session = :newNomSession, date_debut = :newDateDebut, id_formation = :newIdFormation, id_centre = :newIdCentre WHERE id_session = :idSessionToEdit";
     $sqlUpdateSession = $bdd->prepare($sqlUpdateSession);
     $sqlUpdateSession->bindParam(':idSessionToEdit', $idSessionToEdit, PDO::PARAM_INT);
     $sqlUpdateSession->bindParam(':newNomSession', $newNomSession, PDO::PARAM_STR);
     $sqlUpdateSession->bindParam(':newDateDebut', $newDateDebut, PDO::PARAM_STR);
+    $sqlUpdateSession->bindParam(':newIdFormation', $newIdFormation, PDO::PARAM_STR);
+    $sqlUpdateSession->bindParam(':newIdCentre', $newIdCentre, PDO::PARAM_STR);
     $sqlUpdateSession->execute();
 
     echo "Pédagogie mis à jour avec succès.";
@@ -890,9 +948,14 @@ if(isset($_POST['submitEditSession'])) {
 if (isset($_GET['type']) && $_GET['type'] == "supprimer") {
     if (isset($_POST["id_session"])) {
         $deleteIdSession = $_POST["id_session"];
-        $sqlDeleteSession = "DELETE FROM `session` WHERE id_session = $deleteIdSession";
+        $deleteFormation = $_POST["id_formation"];
+        $deleteCentre = $_POST["id_centre"];
 
+        $sqlDeleteSession = "DELETE FROM `session` WHERE id_session = $deleteIdSession";
         $bdd->query($sqlDeleteSession);
+
+        $sqlDeleteLocaliser = "DELETE FROM `localiser` WHERE `id_formation`= $deleteFormation AND  `id_centre`= $deleteCentre ";
+        $bdd->query($sqlDeleteLocaliser);
         echo "Données supprimées";
     }
 }
