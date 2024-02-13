@@ -37,14 +37,7 @@
         
         }
 
-        th, td {
-            /* border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis; */
-            
+        th, td {     
     border: 1px solid #ddd;
     padding: 8px;
     word-wrap: break-word; 
